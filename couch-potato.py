@@ -5,68 +5,78 @@ from datetime  import datetime, timedelta
 tvdb  = api.TVDB("B43FF87DE395DF56")
 shows = ["American Dad", "Family Guy"]
 
-def getShow(showName):
-  return tvdb.search(showName, "en")[0]
+class Show:
+  show = None
+  episodes = []
 
-def getEpisode(show, episode):
-  print getTitle(show, episode)
-  print getDate(episode)
-  print getDescription(episode)
-  print 
+  def __init__(self, showName):
+    self.getShowByName(showName)
+    self.parseEpisodes()
 
-def getTitle(show, episode):
-  return "%s S%02dE%02d" % (show.SeriesName, episode.SeasonNumber, episode.EpisodeNumber)
+  def getShowByName(self, showName):
+    self.show = tvdb.search(showName, "en")[0]
 
-def getDate(episode):
-  return episode.FirstAired
-
-def getDescription(episode):
-  return episode.Overview
+  def parseEpisodes(self):
+    for season in self.show: 
+      for episode in season:
+       if episode.FirstAired:
+       	  self.episodes.append(ShowEvent(self.show, episode))
 
 
-class ShowCalendar():
-  calendar = None
-  calendarName = "TV Shows"
-  calendarDomain = "tv-shows"
+class ShowEvent:
+  event = None
 
-  def __init__(self):
-    self.calendar = Calendar()
-    self.calendar.add("version", "2.0")
-    self.calendar.add("prodid", "-//%s//%s//" % (self.calendarName, self.calendarDomain))
-    self.calendar.add("x-wr-calname", "%s" % self.calendarName)
+  def __init__(self, show, episode):
+    self.event = Event()
+    self.event.add("summary", self.getSummary(show, episode))
+    self.event.add("description", self.getDescription(episode))
+    self.event.add("dtstart", self.getDate(episode))
+    self.event.add("dtend", self.getNextDay(self.event['DTSTART'].dt))
+    self.event.add("dtstamp", datetime.now())
+    self.event["uid"] = self.getUid(self.event['DTSTART'].dt, str(self.event['SUMMARY']))
 
-  def addEvent(self, summary, description, date):
-    event = Event()
-    event.add("summary", summary)
-    event.add("description", description)
-    event.add("dtstart", date)
-    event.add("dtend", self.getNextDay(date))
-    event.add("dtstamp", datetime.now())
-    event["uid"] = self.getUid(date, summary)
-    self.calendar.add_component(event)
+  def getSummary(self, show, episode):
+    return "%s S%02dE%02d" % (show.SeriesName, episode.SeasonNumber, episode.EpisodeNumber)
+
+  def getDescription(self, episode):
+    return "%s\n%s" % (episode.EpisodeName, episode.Overview)
+
+  def getDate(self, episode):
+    return episode.FirstAired
+
+  def getNextDay(self, date):
+    return date + timedelta(days = 1)
 
   def getUid(self, date, summary):
     timestamp = date.strftime("%Y%m%d")
     summary = "".join(summary.lower().split(" "))
-    return summary + "_" + timestamp + "@" + self.calendarDomain
+    return summary + "_" + timestamp
 
-  def getNextDay(self, date):
-    return date + timedelta(days = 1)
+
+class ShowCalendar:
+  calendar = None
+
+  def __init__(self, calendarName):
+    self.calendar = Calendar()
+    self.calendar.add("version", "2.0")
+    self.calendar.add("prodid", "-//%s//%s//" % (calendarName, "-".join(calendarName.lower().split(" "))))
+    self.calendar.add("x-wr-calname", "%s" % (calendarName))
+
+  def addEvents(self, showEvents):
+    for showEvent in showEvents:
+      self.calendar.add_component(showEvent.event)
 
   def save(self, path):
     handle = open(path, "w")
     handle.write(self.calendar.to_ical())
     handle.close()
 
-def main():
-  calendar = ShowCalendar()
-  for showName in shows:
-    show = getShow(showName)
-    for season in show: 
-      for episode in season:
-      	if getDate(episode):
-      	  calendar.addEvent(getTitle(show, episode), getDescription(episode), getDate(episode))
-          getEpisode(show, episode)
-  calendar.save("calendar.ical")
 
-main()
+def main(calendarName, calendarPath):
+  calendar = ShowCalendar(calendarName)
+  for showName in shows:
+    show = Show(showName)
+    calendar.addEvents(show.episodes)
+  calendar.save(calendarPath)
+
+main("TV Shows", "tv-shows.ical")
