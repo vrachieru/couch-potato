@@ -17,10 +17,18 @@ class Show:
     self.show = tvdb.search(showName, "en")[0]
 
   def parseEpisodes(self):
+    self.displayName()
     for season in self.show: 
       for episode in season:
        if episode.FirstAired:
-       	  self.episodes.append(ShowEvent(self.show, episode))
+          self.displayEpisode(episode)
+          self.episodes.append(ShowEvent(self.show, episode))
+
+  def displayName(self):
+    print "\n%s" % self.show.SeriesName
+
+  def displayEpisode(self, episode):
+    print "%s S%02dE%02d - %s" % (episode.FirstAired, episode.SeasonNumber, episode.EpisodeNumber, episode.EpisodeName)
 
 
 class ShowEvent:
