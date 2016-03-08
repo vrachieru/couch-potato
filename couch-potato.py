@@ -3,7 +3,13 @@ from icalendar import Calendar, Event, Timezone
 from datetime  import datetime, timedelta
 
 tvdb  = api.TVDB("B43FF87DE395DF56")
-shows = ["American Dad", "Family Guy"]
+shows = ["American Dad", "Family Guy", "South Park", "Vikings"]
+
+class DateUtil:
+  @staticmethod
+  def getNextDay(date):
+    return date + timedelta(days = 1)
+
 
 class Show:
   show = None
@@ -28,7 +34,7 @@ class Show:
     print "\n%s" % self.show.SeriesName
 
   def displayEpisode(self, episode):
-    print "%s S%02dE%02d - %s" % (episode.FirstAired, episode.SeasonNumber, episode.EpisodeNumber, episode.EpisodeName)
+    print "%s S%02dE%02d - %s" % (DateUtil.getNextDay(episode.FirstAired), episode.SeasonNumber, episode.EpisodeNumber, episode.EpisodeName)
 
 
 class ShowEvent:
@@ -39,7 +45,7 @@ class ShowEvent:
     self.event.add("summary", self.getSummary(show, episode))
     self.event.add("description", self.getDescription(episode))
     self.event.add("dtstart", self.getDate(episode))
-    self.event.add("dtend", self.getNextDay(self.event['DTSTART'].dt))
+    self.event.add("dtend", DateUtil.getNextDay(self.event['DTSTART'].dt))
     self.event.add("dtstamp", datetime.now())
     self.event["uid"] = self.getUid(self.event['DTSTART'].dt, str(self.event['SUMMARY']))
 
@@ -50,10 +56,7 @@ class ShowEvent:
     return "%s\n%s" % (episode.EpisodeName, episode.Overview)
 
   def getDate(self, episode):
-    return episode.FirstAired
-
-  def getNextDay(self, date):
-    return date + timedelta(days = 1)
+    return DateUtil.getNextDay(episode.FirstAired)
 
   def getUid(self, date, summary):
     timestamp = date.strftime("%Y%m%d")
