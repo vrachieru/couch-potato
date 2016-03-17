@@ -3,7 +3,19 @@ from icalendar import Calendar, Event, Timezone
 from datetime  import datetime, timedelta
 
 tvdb  = api.TVDB("B43FF87DE395DF56")
-shows = ["American Dad", "Family Guy", "South Park", "Vikings"]
+
+shows = [
+  "American Dad",
+  "Brickleberry",
+  "Family Guy",
+  "Futurama",
+  "Game of Thrones",
+  "Hannibal",
+  "Narcos",
+  "Sherlock",
+  "South Park",
+  "Vikings"
+]
 
 class DateUtil:
   @staticmethod
