@@ -11,6 +11,7 @@ shows = [
   "Futurama",
   "Game of Thrones",
   "Hannibal",
+  "Lucifer",
   "Narcos",
   "Sherlock",
   "South Park",
